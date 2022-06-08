@@ -24,7 +24,6 @@ do
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 namespace LibraryTerminal
 {
     internal class Program
@@ -33,9 +32,7 @@ namespace LibraryTerminal
         {
             List<Book> libraryBooks = buildLibrary();
             bool continueRunning = true;
-
             Console.WriteLine("Welcome to the C Sharts Library!");
-
             while (continueRunning)
             {
                 Console.WriteLine("Please Enter Your Selection:\n");
@@ -45,7 +42,6 @@ namespace LibraryTerminal
                 Console.WriteLine("4. Return a Book");
                 Console.WriteLine("or hit 'enter' to quit.");
                 string response = Console.ReadLine();
-
                 if (response == "1")
                 {
                     displayList(libraryBooks);
@@ -75,7 +71,6 @@ namespace LibraryTerminal
         {
             var booksList = new List<Book>();
             Book newBook = null;
-
             newBook = new Book(1, "A Time to Kill", "John Grisham", false, new DateTime());
             booksList.Add(newBook);
             newBook = new Book(2, "East of Eden", "John Steinbeck", false, new DateTime());
@@ -100,18 +95,16 @@ namespace LibraryTerminal
             booksList.Add(newBook);
             newBook = new Book(12, "A Farewell to Arms", "Ernest Hemingway", false, new DateTime());
             booksList.Add(newBook);
-
             return booksList;
         }
         public class Book
         {
-            //add book number 
+            //add book number
             public int BookNum { get; set; }
             public string Title { get; set; }
             public string Author { get; set; }
             public bool CheckedOutStatus { get; set; }
             public DateTime? DueDate { get; set; }
-
             public Book(int newBookNum, string newTitle, string newAuthor, bool newStatus, DateTime newDate)
             {
                 BookNum = newBookNum;
@@ -123,24 +116,24 @@ namespace LibraryTerminal
         }
         public static void displayList(List<Book> myBooks)
         {
+            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", "", "Title", "Author", "Status"));
+            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", "", "=====", "======", "====="));
             for (int i = 0; i < myBooks.Count; i++)
             {
                 int bookNum = i + 1;
                 string status;
-
                 if (myBooks[i].CheckedOutStatus == true)
                 {
                     status = "Not Available";
-                    Console.WriteLine($"{bookNum}: \t {myBooks[i].Title} \t Author: {myBooks[i].Author} \tStatus: {status} \t Expected Return Date: {myBooks[i].DueDate:MM/dd/yyyy}");
-
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}"));
                 }
                 else
                 {
                     status = "Available";
-                    Console.WriteLine($"{bookNum}: \t {myBooks[i].Title} \t Author: {myBooks[i].Author} \t Status: {status} ");
-
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}"));
                 }
             }
+            Console.WriteLine();
         }
 
         public static void searchBook(List<Book> myBooks)
@@ -211,23 +204,30 @@ namespace LibraryTerminal
                     string choice = Console.ReadLine();
                     int choiceInt = int.Parse(choice);
                     Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
-                    Console.WriteLine($"You've selected {selectedBook.Title}. Would you like to check it out? (y/n)");
-                    string userSelection = Console.ReadLine().ToUpper();
-                    if (userSelection == "Y")
+                    if (selectedBook != null)
                     {
-                        selectedBook.DueDate = DateTime.Today.AddDays(14);
-                        Console.WriteLine($"Enjoy {selectedBook.Title} it is due back {selectedBook.DueDate}");
-                        selectedBook.CheckedOutStatus = true;
+                        Console.WriteLine($"You've selected {selectedBook.Title}. Would you like to check it out? (y/n)");
+                        string userSelection = Console.ReadLine().ToUpper();
+                        if (userSelection == "Y")
+                        {
+                            selectedBook.DueDate = DateTime.Today.AddDays(14);
+                            Console.WriteLine($"Enjoy {selectedBook.Title} it is due back {selectedBook.DueDate}");
+                            selectedBook.CheckedOutStatus = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Book not checked out. \n");
+                        }
+                        Console.WriteLine("Would you like to check out another book? (y/n)");
+                        string answer = Console.ReadLine().ToUpper();
+                        if (answer != "Y")
+                        {
+                            continueSelection = false;
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Book not checked out. \n");
-                    }
-                    Console.WriteLine("Would you like to check out another book? (y/n)");
-                    string answer = Console.ReadLine().ToUpper();
-                    if (answer != "Y")
-                    {
-                        continueSelection = false;
+                        Console.WriteLine("You did not select a valid book from our library.");
                     }
                 }
                 catch (Exception ex)
@@ -247,26 +247,36 @@ namespace LibraryTerminal
                     Console.WriteLine("Enter the number of the book do you want to return?");
                     string choice = Console.ReadLine();
                     int choiceInt = int.Parse(choice);
-                    //bool isValidInt = int.TryParse(choice, out choiceInt); 
+                    //bool isValidInt = int.TryParse(choice, out choiceInt);
                     Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
-                    Console.WriteLine($"You chose: {selectedBook.BookNum} {selectedBook.Title} Due Date: {selectedBook.DueDate:MM/dd/yyyy}");
-                    Console.WriteLine("Would you like to return this book? (y/n)");
-                    string ans = Console.ReadLine().ToUpper();
-                    if (ans == "Y")
+                    if (selectedBook != null)
                     {
-                        if (selectedBook.CheckedOutStatus == true)
+                        Console.WriteLine($"You chose: {selectedBook.BookNum} {selectedBook.Title} Due Date: {selectedBook.DueDate:MM/dd/yyyy}");
+                        if (selectedBook.CheckedOutStatus == false)
                         {
-                            selectedBook.CheckedOutStatus = false;
-                            selectedBook.DueDate = null;
-                            Console.WriteLine($" { selectedBook.BookNum}. { selectedBook.Title} - Successfully Returned.");
+                            Console.WriteLine("This book is already in our library. You must've checked it out from a different branch.");
                         }
-                        else { Console.WriteLine("This book isn't checked out so you can't return it."); }
-                    }
-                    Console.WriteLine("Would you like to return another book? (y/n)");
-                    ans = Console.ReadLine().ToUpper();
-                    if (ans == "N")
-                    {
-                        continueReturns = false;    
+                        else
+                        {
+                            Console.WriteLine("Would you like to return this book? (y/n)");
+                            string ans = Console.ReadLine().ToUpper();
+                            if (ans == "Y")
+                            {
+                                if (selectedBook.CheckedOutStatus == true)
+                                {
+                                    selectedBook.CheckedOutStatus = false;
+                                    selectedBook.DueDate = null;
+                                    Console.WriteLine($" { selectedBook.BookNum}. { selectedBook.Title} - Successfully Returned.");
+                                }
+                                else { Console.WriteLine("This book isn't checked out so you can't return it."); }
+                            }
+                            Console.WriteLine("Would you like to return another book? (y/n)");
+                            ans = Console.ReadLine().ToUpper();
+                            if (ans == "N")
+                            {
+                                continueReturns = false;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -277,4 +287,3 @@ namespace LibraryTerminal
         }
     }
 }
-
