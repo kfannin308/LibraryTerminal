@@ -63,7 +63,11 @@ namespace LibraryTerminal
                 {
                     Console.WriteLine("Goodbye!");
                     continueRunning = false;
-                    //return;
+                   
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Selection.\n");
                 }
             }
         }
@@ -116,16 +120,18 @@ namespace LibraryTerminal
         }
         public static void displayList(List<Book> myBooks)
         {
-            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", "", "Title", "Author", "Status"));
-            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", "", "=====", "======", "====="));
+            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}{4,-20}", "", "Title", "Author", "Status", "Return Date"));
+            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}{4,-20}", "", "=====", "======", "======", "==========="));
             for (int i = 0; i < myBooks.Count; i++)
             {
                 int bookNum = i + 1;
                 string status;
+
                 if (myBooks[i].CheckedOutStatus == true)
                 {
                     status = "Not Available";
-                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}"));
+                    // Console.WriteLine($"{bookNum}: \t {myBooks[i].Title} \t Author: {myBooks[i].Author} \tStatus: {status} \t Expected Return Date: {myBooks[i].DueDate:MM/dd/yyyy}");
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}{4,-20}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}", $"{ myBooks[i].DueDate:MM/dd/yyyy}"));
                 }
                 else
                 {
@@ -133,9 +139,7 @@ namespace LibraryTerminal
                     Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}"));
                 }
             }
-            Console.WriteLine();
         }
-
         public static void searchBook(List<Book> myBooks)
         {
             // Lookup w/ keyword by Title or Author?
@@ -193,41 +197,62 @@ namespace LibraryTerminal
                 // re-run searchBook
             }
         }
+        // NEED TO FIX: need to not allow the book to be selected if checked out
         public static void selectBook(List<Book> myBooks)
         {
             bool continueSelection = true;
+
             while (continueSelection)
             {
                 try
                 {
                     Console.WriteLine("Enter your choice by book number:");
                     string choice = Console.ReadLine();
-                    int choiceInt = int.Parse(choice);
-                    Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
-                    if (selectedBook != null)
+                    //int choiceInt = int.Parse(choice);
+                    int choiceInt;
+                    bool isValidInt = int.TryParse(choice, out choiceInt);
+                    if (String.IsNullOrEmpty(choice) || (isValidInt == false))
                     {
-                        Console.WriteLine($"You've selected {selectedBook.Title}. Would you like to check it out? (y/n)");
-                        string userSelection = Console.ReadLine().ToUpper();
-                        if (userSelection == "Y")
+                        Console.WriteLine("Invalid Input. Returning to Main Menu.\n");
+                        continueSelection = false;
+                    }
+                    else if (choiceInt < 0 || choiceInt > myBooks.Count)
+                    {
+                        Console.WriteLine("Invalid Input. Returning to Main Menu.\n");
+                        continueSelection = false;
+                    }
+                    else if (isValidInt)
+                    {
+                        Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
+                        if (selectedBook != null)
                         {
-                            selectedBook.DueDate = DateTime.Today.AddDays(14);
-                            Console.WriteLine($"Enjoy {selectedBook.Title} it is due back {selectedBook.DueDate}");
-                            selectedBook.CheckedOutStatus = true;
+                            Console.WriteLine($"You've selected {selectedBook.Title}. Would you like to check it out? (y/n)");
+                            string userSelection = Console.ReadLine().ToUpper();
+                            if (userSelection == "Y")
+                            {
+                                selectedBook.DueDate = DateTime.Today.AddDays(14);
+                                Console.WriteLine($"Enjoy {selectedBook.Title} it is due back {selectedBook.DueDate:MM/dd/yyyy}");
+                                selectedBook.CheckedOutStatus = true;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Book not checked out. \n");
+                            }
+                            Console.WriteLine("Would you like to check out another book? (y/n)");
+                            string answer = Console.ReadLine().ToUpper();
+                            if (answer != "Y")
+                            {
+                                continueSelection = false;
+                            }
+                            else if ((answer != "Y") && (answer != "N"))
+                            {
+                                Console.WriteLine("Invalid Response.");
+                            }
                         }
                         else
                         {
-                            Console.WriteLine("Book not checked out. \n");
+                            Console.WriteLine("You did not select a valid book from our library.");
                         }
-                        Console.WriteLine("Would you like to check out another book? (y/n)");
-                        string answer = Console.ReadLine().ToUpper();
-                        if (answer != "Y")
-                        {
-                            continueSelection = false;
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("You did not select a valid book from our library.");
                     }
                 }
                 catch (Exception ex)
@@ -237,6 +262,8 @@ namespace LibraryTerminal
             }
             return;
         }
+
+
         public static void returnBook(List<Book> myBooks)
         {
             bool continueReturns = true;
@@ -246,38 +273,62 @@ namespace LibraryTerminal
                 {
                     Console.WriteLine("Enter the number of the book do you want to return?");
                     string choice = Console.ReadLine();
-                    int choiceInt = int.Parse(choice);
-                    //bool isValidInt = int.TryParse(choice, out choiceInt);
-                    Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
-                    if (selectedBook != null)
+                    int choiceInt;
+
+                    bool isValidInt = int.TryParse(choice, out choiceInt);
+
+                    if (String.IsNullOrEmpty(choice) || (isValidInt == false))
                     {
-                        Console.WriteLine($"You chose: {selectedBook.BookNum} {selectedBook.Title} Due Date: {selectedBook.DueDate:MM/dd/yyyy}");
-                        if (selectedBook.CheckedOutStatus == false)
+                        Console.WriteLine("Invalid Input. Returning to the Main Menu\n");
+                        continueReturns = false;
+                    }
+
+                    //Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
+                    else if (choiceInt < 0 || choiceInt > myBooks.Count)
+                    {
+                        Console.WriteLine("Invalid Book Number. Please enter a book number from our library\n");
+                        continueReturns = false;
+                    }
+                    else if (isValidInt)
+                    {
+                        Book selectedBook = myBooks.Where(Book => Book.BookNum == choiceInt).FirstOrDefault();
+                        if (selectedBook != null)
                         {
-                            Console.WriteLine("This book is already in our library. You must've checked it out from a different branch.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Would you like to return this book? (y/n)");
-                            string ans = Console.ReadLine().ToUpper();
-                            if (ans == "Y")
+                            Console.WriteLine($"You chose: {selectedBook.BookNum} {selectedBook.Title}");
+                            if (selectedBook.CheckedOutStatus == false)
                             {
-                                if (selectedBook.CheckedOutStatus == true)
-                                {
-                                    selectedBook.CheckedOutStatus = false;
-                                    selectedBook.DueDate = null;
-                                    Console.WriteLine($" { selectedBook.BookNum}. { selectedBook.Title} - Successfully Returned.");
-                                }
-                                else { Console.WriteLine("This book isn't checked out so you can't return it."); }
-                            }
-                            Console.WriteLine("Would you like to return another book? (y/n)");
-                            ans = Console.ReadLine().ToUpper();
-                            if (ans == "N")
-                            {
+                                Console.WriteLine("This book is already in our library. You must've checked it out from a different branch.\n" +
+                                    "Returning to the Main Menu.\n");
                                 continueReturns = false;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Would you like to return this book? (y/n)");
+                                string ans = Console.ReadLine().ToUpper();
+                                if (ans == "Y")
+                                {
+                                    if (selectedBook.CheckedOutStatus == true)
+                                    {
+                                        selectedBook.CheckedOutStatus = false;
+                                        selectedBook.DueDate = null;
+                                        Console.WriteLine($" { selectedBook.BookNum}. { selectedBook.Title} - Successfully Returned.");
+                                    }
+                                    else { Console.WriteLine("This book isn't checked out so you can't return it."); }
+                                }
+                                Console.WriteLine("Would you like to return another book? (y/n)");
+                                ans = Console.ReadLine().ToUpper();
+                                if (ans == "N")
+                                {
+                                    continueReturns = false;
+                                }
+                                else if((ans != "Y") && (ans != "N"))
+                                {
+                                    Console.WriteLine("Invalid Response.");
+                                }
                             }
                         }
                     }
+                    else continueReturns = false;
                 }
                 catch (Exception ex)
                 {
