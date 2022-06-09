@@ -1,27 +1,4 @@
-﻿/*
-do
-{ 
-1.Display the entire list of books.  Format it nicely. // display method
-  a.Display Book Number, Book Title, Author, Status and Due Date 
-2.	Search for a book //search method
-  a.	By Author
-  b.	By Title keyword
-3.	Select a Book from the list //select method
-  a.	If not a valid book, display error and prompt user for another choice or display the list.
-  b.   If it’s already checked out, let them know.
-  c.   If not, check it out to them and set the due date to 2 weeks from today.
-4.	Return a book (we can decide how that works/questions to ask) //return a book method
-  a.Ask which book they want to return
-  b.	If book isn’t checked out, give error
-  c.	If book is checked out: 
-          i.update status 
-          ii.	clear out due date. 
-
-5.	Exit – Hit enter to exit
-) while (continueRunning = true) 
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 namespace LibraryTerminal
@@ -30,8 +7,10 @@ namespace LibraryTerminal
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Green;
             List<Book> libraryBooks = buildLibrary();
             bool continueRunning = true;
+            bool burnedDown = false;
             Console.WriteLine("Welcome to the C Sharts Library!");
             while (continueRunning)
             {
@@ -59,11 +38,39 @@ namespace LibraryTerminal
                 {
                     returnBook(libraryBooks);
                 }
+                else if (response == "light a match")
+                {
+                    burnBooks(libraryBooks);
+                    burnedDown = true;
+                    break;
+                }
                 else if (String.IsNullOrEmpty(response))
                 {
                     Console.WriteLine("Goodbye!");
+                    continueRunning = false;             
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Selection.\n");
+                }
+            }
+            while (burnedDown == true)
+            {
+                Console.WriteLine("Please Enter Your Selection:\n");
+                Console.WriteLine("1. Display The List of Books");
+                Console.WriteLine("or hit 'enter' to quit.");
+                string response = Console.ReadLine();
+                if (response == "1")
+                {
+                    displayList(libraryBooks);
+                }
+                else if (String.IsNullOrEmpty(response))
+                {
+                    Console.WriteLine("Goodbye!");
+                    // save book list
                     continueRunning = false;
-                   
+                    break;
+
                 }
                 else
                 {
@@ -103,7 +110,6 @@ namespace LibraryTerminal
         }
         public class Book
         {
-            //add book number
             public int BookNum { get; set; }
             public string Title { get; set; }
             public string Author { get; set; }
@@ -118,6 +124,30 @@ namespace LibraryTerminal
                 DueDate = newDate;
             }
         }
+
+        //Burn Down the Library
+        public static void burnBooks(List<Book> myBooks)
+        {
+            myBooks.Clear();
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            string textToEnter = @"
+               (  .      )
+           )           (              )
+                 .  '   .   '  .  '  .
+        (    , )       (.   )  (   ',    )
+         .' ) ( . )    ,  ( ,     )   ( .
+      ). , ( .   (  ) ( , ')  .' (  ,    )
+     (_,) . ), ) _) _,')  (, ) '. )  ,. (' )
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ";
+            Console.WriteLine(String.Format("{0," + ((Console.WindowWidth / 2) + (textToEnter.Length / 2)) + "}", textToEnter));
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Congratulations. You have burned every single book to a crisp.");
+            Console.WriteLine("Hate to break it to you, but the C Sharts library was actually");
+            Console.WriteLine("the Library of Alexandria. People are gunna be pretty mad...");
+            Console.WriteLine();
+        }
+       // Display List of Books
         public static void displayList(List<Book> myBooks)
         {
             Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}{4,-20}", "", "Title", "Author", "Status", "Return Date"));
@@ -130,7 +160,7 @@ namespace LibraryTerminal
                 if (myBooks[i].CheckedOutStatus == true)
                 {
                     status = "Not Available";
-                    // Console.WriteLine($"{bookNum}: \t {myBooks[i].Title} \t Author: {myBooks[i].Author} \tStatus: {status} \t Expected Return Date: {myBooks[i].DueDate:MM/dd/yyyy}");
+                    
                     Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-30}{3,-30}{4,-20}", $"{bookNum}: ", $"{myBooks[i].Title} ", $"{myBooks[i].Author} ", $"{status}", $"{ myBooks[i].DueDate:MM/dd/yyyy}"));
                 }
                 else
@@ -140,64 +170,83 @@ namespace LibraryTerminal
                 }
             }
         }
+        // Search List by Title or Author
         public static void searchBook(List<Book> myBooks)
         {
-            // Lookup w/ keyword by Title or Author?
-            Console.WriteLine("Would you like to search Titles or Authors?");
-            string titlesOrAuthors = Console.ReadLine();
-            if (titlesOrAuthors == "Titles")
+            
+            Console.WriteLine();
+            Console.WriteLine("Would you like to search Title or Author?");
+            string titlesOrAuthors = Console.ReadLine().ToLower();
+            if (titlesOrAuthors == "title")
             {
+                Console.WriteLine();
                 Console.WriteLine("Enter a keyword to lookup a title:");
                 string keyword = Console.ReadLine();
-                List<Book> searchResult = myBooks.Where(Book => Book.Title.Contains(keyword)).ToList();
+                List<Book> searchResult = myBooks.Where(Book => Book.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
                 if (searchResult.Count > 0)
                 {
                     Console.WriteLine("Results found:");
+                    Console.WriteLine();
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", "", "Title", "Author", "Status", "Return Date"));
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", "", "=====", "======", "======", "==========="));
                     for (int i = 0; i < searchResult.Count; i++)
                     {
-                        var bookNum = i + 1;
-                        Console.WriteLine($"{bookNum}: {searchResult[i].Title} {searchResult[i].Author} {searchResult[i].CheckedOutStatus} {searchResult[i].DueDate}");
+                        int bookNum = i + 1;
+                        string status;
+                        if (searchResult[i].CheckedOutStatus == true)
+                        {
+                            status = "Not Available";
+                            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", $"{bookNum}: ", $"{searchResult[i].Title} ", $"{searchResult[i].Author} ", $"{status}", $"{ searchResult[i].DueDate:MM/dd/yyyy}"));
+                        }
+                        else
+                        {
+                            status = "Available";
+                            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", $"{bookNum}: ", $"{searchResult[i].Title} ", $"{searchResult[i].Author} ", $"{status}", ""));
+                        }
                     }
+                    Console.WriteLine();
                 }
                 else
                 {
-                    Console.WriteLine("No matches found. Here is a list of our available books:");
+                    Console.WriteLine("No matches found. Here is a list of our books:");
                     List<Book> libraryBooks = buildLibrary();
                     displayList(libraryBooks);
-                    // select book to check out?
-                    // probably better if it takes them back to the main menu
                 }
             }
-            else if (titlesOrAuthors == "Authors")
+            else if (titlesOrAuthors == "author")
             {
                 Console.WriteLine("Enter a first, last, or full name to lookup an Author:");
                 string keyword = Console.ReadLine();
-                List<Book> searchResult = myBooks.Where(Book => Book.Author.Contains(keyword)).ToList();
+                List<Book> searchResult = myBooks.Where(Book => Book.Author.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
                 if (searchResult.Count > 0)
                 {
                     Console.WriteLine("Results found:");
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", "", "Title", "Author", "Status", "Return Date"));
+                    Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", "", "=====", "======", "======", "==========="));
                     for (int i = 0; i < searchResult.Count; i++)
                     {
-                        var bookNum = i + 1;
-                        Console.WriteLine($"{bookNum}: {searchResult[i].Title} {searchResult[i].Author} {searchResult[i].CheckedOutStatus} {searchResult[i].DueDate}");
+                        int bookNum = i + 1;
+                        string status;
+                        if (searchResult[i].CheckedOutStatus == true)
+                        {
+                            status = "Not Available";
+                            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", $"{bookNum}: ", $"{searchResult[i].Title} ", $"{searchResult[i].Author} ", $"{status}", $"{ searchResult[i].DueDate:MM/dd/yyyy}"));
+                        }
+                        else
+                        {
+                            status = "Available";
+                            Console.WriteLine(string.Format("{0,-4}{1,-30}{2,-25}{3,-20}{4,-20}", $"{bookNum}: ", $"{searchResult[i].Title} ", $"{searchResult[i].Author} ", $"{status}", ""));
+                        }
                     }
-                    // selectBook(searchResult); <-- cant use this because it references the entire book list, not filtered results
-                    // make checkout method?
-                }
-                else
-                {
-                    Console.WriteLine("No matches found.");
-                    // select book to check out?
-                    // probably better if it takes them back to the main menu
                 }
             }
             else
             {
                 Console.WriteLine("Invalid input.");
-                // re-run searchBook
             }
         }
-        // NEED TO FIX: need to not allow the book to be selected if checked out
+
+        //Select Book to check out
         public static void selectBook(List<Book> myBooks)
         {
             bool continueSelection = true;
@@ -208,7 +257,6 @@ namespace LibraryTerminal
                 {
                     Console.WriteLine("Enter your choice by book number:");
                     string choice = Console.ReadLine();
-                    //int choiceInt = int.Parse(choice);
                     int choiceInt;
                     bool isValidInt = int.TryParse(choice, out choiceInt);
                     if (String.IsNullOrEmpty(choice) || (isValidInt == false))
@@ -263,7 +311,7 @@ namespace LibraryTerminal
             return;
         }
 
-
+        // Return a Book
         public static void returnBook(List<Book> myBooks)
         {
             bool continueReturns = true;
